@@ -163,7 +163,6 @@ export default function Home() {
       const key = e.key.toLowerCase();
       if (key === "a") moveFighter(0,-4); if (key === "d") moveFighter(0,4); if (key === "w") animate(0,"jump");
       if (key === "j") act(0,"punch"); if (key === "k") act(0,"kick"); if (key === "i") act(0,"block"); if (key === "l") act(0,"special");
-      if (mode === "duo") { if (e.key === "ArrowLeft") moveFighter(1,-4); if (e.key === "ArrowRight") moveFighter(1,4); if (e.key === "ArrowUp") animate(1,"jump"); if (key === "1") act(1,"punch"); if (key === "2") act(1,"kick"); if (key === "3") act(1,"block"); if (key === "0") act(1,"special"); }
     };
     window.addEventListener("keydown",onKey); return () => window.removeEventListener("keydown",onKey);
   }, [act, mode, moveFighter, screen]);
