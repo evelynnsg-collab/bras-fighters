@@ -59,26 +59,10 @@ button,input{font:inherit}.game-shell{position:relative;width:100vw;height:100dv
 @keyframes femaleBatonPose{0%,38%{background-image:url('/fighter-agente-feminina.png')}39%,100%{background-image:url('/fighter-agente-feminina-special.png')}}
 .stage-route{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}.stage-route span{min-width:0;padding:7px 3px;background:#0b1826;border:1px solid #36546c;text-align:center;font:700 7px/1.15 Arial;color:#bdd0dc}.stage-route b{display:grid;place-items:center;width:18px;height:18px;margin:0 auto 4px;border-radius:50%;background:var(--orange);color:#fff;font-size:9px}
 .stage-transition{position:absolute;z-index:55;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(circle,#163b56f2 0,#05080df7 58%,#000 100%);border:clamp(5px,1vw,12px) solid var(--orange);animation:stationReveal .35s ease-out}.stage-transition span{color:var(--yellow);font-size:clamp(24px,5vw,64px);font-style:italic;letter-spacing:2px;text-shadow:5px 5px #9b2600}.stage-transition small{font:900 clamp(8px,1.4vw,15px) Arial;letter-spacing:5px;color:#c9ecf6}.stage-transition b{margin-top:1vh;color:#fff;font-size:clamp(34px,7vw,84px);font-style:italic;text-shadow:6px 6px #000,-2px -2px var(--cyan)}.stage-transition i{margin-top:1vh;padding:6px 15px;background:var(--orange);font-size:clamp(10px,1.7vw,18px);letter-spacing:3px}.station-arrow{height:clamp(48px,11vh,100px);color:var(--cyan);font:900 clamp(55px,10vw,120px)/.9 Arial;text-shadow:0 0 24px #45eaff;animation:stationUp .7s ease-in-out infinite alternate}@keyframes stationReveal{from{opacity:0;transform:scale(1.08)}to{opacity:1;transform:scale(1)}}@keyframes stationUp{from{transform:translateY(18px);opacity:.5}to{transform:translateY(-8px);opacity:1}}
-/* Preserva as cores originais dos personagens no celular */
-.arena,
-.arena-bras,
-.arena-luz,
-.arena-tatuape,
-.arena-guaianases,
-.arena-itaquera {
-  filter: none !important;
-}
 
-.fighter,
-.fighter.hit,
-.fighter.special,
-.fighter.block {
-  filter: drop-shadow(9px 10px 2px #000a) !important;
-}
-
-.fighter .sprite {
-  filter: none !important;
-  opacity: 1;
-  mix-blend-mode: normal;
-  isolation: isolate;
-}
+/* Keep the original sprite palette on mobile Safari. Filters on animated
+   ancestors can otherwise be composited into the transparent PNG sprites. */
+.arena,.arena-bras,.arena-luz,.arena-tatuape,.arena-guaianases,.arena-itaquera{filter:none!important}
+.fighter,.fighter.hit,.fighter.special,.fighter.block,.fighter.cpu,.fighter.cpu.hit,.fighter.cpu.special{filter:none!important}
+.fighter .sprite{filter:none!important;opacity:1;mix-blend-mode:normal;isolation:isolate}
+@keyframes hit{25%{transform:translateX(5vw) rotate(8deg)}70%{transform:translateX(-1vw)}100%{transform:translateX(0)}}
