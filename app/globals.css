@@ -88,7 +88,7 @@ footer{display:block;position:fixed;z-index:35;left:0;right:0;bottom:4px;text-al
 /* Evelyn S. articulated combat upgrade */
 .fighter-evelyn-actor{width:20vw;height:61dvh;max-width:285px;transform-origin:50% 100%;filter:drop-shadow(7px 9px 2px #000a)!important}
 .fighter-evelyn-actor .fighter-evelyn{position:relative;overflow:visible;filter:none!important;-webkit-filter:none!important;animation:evelynBreathing 1.85s ease-in-out infinite;transform-origin:50% 92%}
-.fighter-evelyn-actor.punch,.fighter-evelyn-actor.kick{width:20vw;max-width:285px;transform:none!important}
+.fighter-evelyn-actor.punch,.fighter-evelyn-actor.kick{width:20vw;max-width:285px}.fighter-evelyn-actor.punch{transform:translateX(3vw) scale(1.04)!important}.fighter-evelyn-actor.kick{transform:translateX(2vw) scale(1.03)!important}
 .fighter-evelyn-actor.punch .fighter-evelyn,.fighter-evelyn-actor.kick .fighter-evelyn,.fighter-evelyn-actor.special .fighter-evelyn{animation:none}
 .ev-limb,.ev-baton,.ev-impact{display:block;position:absolute;z-index:9;pointer-events:none;opacity:0;box-sizing:border-box}
 .ev-upper-arm,.ev-forearm{height:7%;border-radius:999px;transform-origin:8% 50%;background:linear-gradient(90deg,#f36c1d 0 34%,#f7f7f7 35% 47%,#18283e 48% 100%);border:1px solid #0b1322;box-shadow:0 2px 4px #0008}
