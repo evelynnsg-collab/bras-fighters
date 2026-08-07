@@ -53,6 +53,9 @@ export default function Home() {
   const winsRef = useRef<[number, number]>([0, 0]);
   const afastaAudio = useRef<HTMLAudioElement | null>(null);
   const ossAudio = useRef<HTMLAudioElement | null>(null);
+  const themeContext = useRef<AudioContext | null>(null);
+  const themeTimer = useRef<number | null>(null);
+  const themeStep = useRef(0);
   const directionLoop = useRef<number | null>(null);
 
   useEffect(() => {
@@ -224,15 +227,44 @@ export default function Home() {
     }),1000); return () => clearInterval(timer);
   }, [endRound, screen]);
 
+  const stopTheme = useCallback(() => {
+    if (themeTimer.current !== null) window.clearInterval(themeTimer.current);
+    themeTimer.current = null;
+    if (themeContext.current) void themeContext.current.close().catch(() => {});
+    themeContext.current = null;
+  }, []);
+
+  const startTheme = useCallback(() => {
+    if (muted || themeContext.current) return;
+    try {
+      const AudioCtx = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const ctx = new AudioCtx(); themeContext.current = ctx;
+      const melody = [220, 262, 294, 330, 294, 392, 349, 294, 247, 294, 330, 440, 392, 330, 294, 262];
+      const playNote = () => {
+        if (!themeContext.current) return;
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.type = themeStep.current % 4 === 0 ? "sawtooth" : "square";
+        osc.frequency.value = melody[themeStep.current % melody.length];
+        gain.gain.setValueAtTime(.026, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .16);
+        osc.connect(gain); gain.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + .17);
+        themeStep.current += 1;
+      };
+      playNote(); themeTimer.current = window.setInterval(playNote, 180);
+    } catch {}
+  }, [muted]);
+
+  useEffect(() => () => stopTheme(), [stopTheme]);
+
   const start = () => {
     const initialWins: [number,number] = [0,0]; winsRef.current = initialWins; hpRef.current=[100,100];
-    punchStreak.current=0; lastPunchAt.current=0; setStage(0); setStageTransition(null); setWins(initialWins); setHp([100,100]); setEnergy([20,45]); setPosition([15,65]); setVerticalPosition([16,16]); setTime(60); setCombo(0); setMessage("FASE 1 — BRÁS"); locked.current=false; setScreen("fight");
+    startTheme(); punchStreak.current=0; lastPunchAt.current=0; setStage(0); setStageTransition(null); setWins(initialWins); setHp([100,100]); setEnergy([20,45]); setPosition([15,65]); setVerticalPosition([16,16]); setTime(60); setCombo(0); setMessage("FASE 1 — BRÁS"); locked.current=false; setScreen("fight");
   };
 
   return <main className="game-shell">
     <div className="scanlines" />
     <div className="rotate-device"><div className="phone-icon">↻</div><b>GIRE O CELULAR</b><span>O jogo funciona na horizontal</span></div>
-    <header className={`topbar ${screen==="fight"?"during-fight":""}`}><button className="brandButton" onClick={()=>setScreen("intro")}><span>BRÁS</span> FIGHTERS <small>MOBILE</small></button><div className="header-actions"><button onClick={()=>setShowHelp(true)}>?</button><button onClick={()=>setMuted(v=>!v)}>{muted?"🔇":"🔊"}</button></div></header>
+    <header className={`topbar ${screen==="fight"?"during-fight":""}`}><button className="brandButton" onClick={()=>setScreen("intro")}><span>BRÁS</span> FIGHTERS <small>MOBILE</small></button><div className="header-actions"><button onClick={()=>setShowHelp(true)}>?</button><button onClick={()=>setMuted(v=>{const next=!v;if(next)stopTheme();else if(screen==="fight")window.setTimeout(startTheme,0);return next})}>{muted?"🔇":"🔊"}</button></div></header>
 
     {screen === "intro" && <section className="intro enhanced"><div className="intro-copy"><p className="eyebrow">NOVA EDIÇÃO • BATALHA FERROVIÁRIA</p><h1>BRÁS<br/><em>FIGHTERS</em></h1><p className="lead">Escolha seu agente, domine as plataformas e conquiste a Linha 11.</p><div className="intro-buttons"><button className="start" onClick={()=>setScreen("setup")}>JOGAR AGORA <span>▶</span></button><button className="ghost" onClick={()=>setShowHelp(true)}>VER CONTROLES</button></div><div className="records"><span>🏆 {stats.victories} vitórias</span><span>⚡ Melhor combo: {stats.bestCombo}</span></div></div><div className="versus-card"><div className="intro-fighter left"/><div className="vs">VS</div><div className="intro-fighter right"/></div></section>}
 
