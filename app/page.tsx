@@ -58,6 +58,7 @@ export default function Home() {
   const winsRef = useRef<[number, number]>([0, 0]);
   const afastaAudio = useRef<HTMLAudioElement | null>(null);
   const ossAudio = useRef<HTMLAudioElement | null>(null);
+  const youtubeFrame = useRef<HTMLIFrameElement | null>(null);
   const themeContext = useRef<AudioContext | null>(null);
   const themeTimer = useRef<number | null>(null);
   const themeStep = useRef(0);
@@ -83,6 +84,16 @@ export default function Home() {
     if (result.outcome === "accepted") setIsInstalled(true);
     setInstallPrompt(null);
   }, [installPrompt, isIos]);
+
+  const playMusic = useCallback(() => {
+    setMuted(false);
+    window.setTimeout(() => youtubeFrame.current?.contentWindow?.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "*"), 50);
+  }, []);
+
+  const pauseMusic = useCallback(() => {
+    youtubeFrame.current?.contentWindow?.postMessage(JSON.stringify({ event: "command", func: "pauseVideo", args: [] }), "*");
+    setMuted(true);
+  }, []);
 
   const sound = useCallback((tone = 160, length = .07) => {
     if (muted) return;
@@ -280,25 +291,27 @@ export default function Home() {
 
   const start = () => {
     const initialWins: [number,number] = [0,0]; winsRef.current = initialWins; hpRef.current=[100,100];
-    punchStreak.current=0; lastPunchAt.current=0; setStage(0); setStageTransition(null); setWins(initialWins); setHp([100,100]); setEnergy([20,45]); setPosition([15,65]); setVerticalPosition([16,16]); setTime(60); setCombo(0); setMessage("FASE 1 — BRÁS"); locked.current=false; setScreen("fight");
+    playMusic(); punchStreak.current=0; lastPunchAt.current=0; setStage(0); setStageTransition(null); setWins(initialWins); setHp([100,100]); setEnergy([20,45]); setPosition([15,65]); setVerticalPosition([16,16]); setTime(60); setCombo(0); setMessage("FASE 1 — BRÁS"); locked.current=false; setScreen("fight");
   };
 
   return <main className="game-shell">
+    <iframe ref={youtubeFrame} className="youtube-music" title="Música da batalha" src="https://www.youtube.com/embed/coz22oUWnC0?enablejsapi=1&loop=1&playlist=coz22oUWnC0&controls=0&modestbranding=1&playsinline=1" allow="autoplay; encrypted-media"/>
     <div className="scanlines" />
     <div className="rotate-device"><div className="phone-icon">↻</div><b>GIRE O CELULAR</b><span>O jogo funciona na horizontal</span></div>
-    <header className={`topbar ${screen==="fight"?"during-fight":""}`}><button className="brandButton" onClick={()=>setScreen("intro")}><span>BRÁS</span> FIGHTERS <small>MOBILE</small></button><div className="header-actions"><button onClick={()=>setShowHelp(true)}>?</button><button onClick={()=>setMuted(v=>!v)}>{muted?"🔇":"🔊"}</button></div></header>
+    <header className={`topbar ${screen==="fight"?"during-fight":""}`}><button className="brandButton" onClick={()=>setScreen("intro")}><span>BRÁS</span> FIGHTERS <small>MOBILE</small></button><div className="header-actions"><button onClick={()=>setShowHelp(true)}>?</button><button onClick={()=>muted?playMusic():pauseMusic()}>{muted?"🔇":"🔊"}</button></div></header>
 
-    {screen === "intro" && <section className="intro enhanced"><div className="intro-copy"><p className="eyebrow">NOVA EDIÇÃO • BATALHA FERROVIÁRIA</p><h1>BRÁS<br/><em>FIGHTERS</em></h1><p className="lead">Escolha seu agente, domine as plataformas e conquiste a Linha 11.</p><div className="intro-buttons"><button className="start" onClick={()=>setScreen("setup")}>JOGAR AGORA <span>▶</span></button><button className="ghost" onClick={()=>setShowHelp(true)}>VER CONTROLES</button>{!isInstalled&&<button className="install-app" onClick={installApp}>⬇ {isIos?"INSTALAR NO IPHONE":"INSTALAR APP"}</button>}</div><div className="records"><span>🏆 {stats.victories} vitórias</span><span>⚡ Melhor combo: {stats.bestCombo}</span></div></div><div className="versus-card"><div className="intro-fighter left"/><div className="vs">VS</div><div className="intro-fighter right"/></div></section>}
+    {screen === "intro" && <section className="intro enhanced"><div className="intro-copy"><p className="eyebrow">NOVA EDIÇÃO • BATALHA FERROVIÁRIA</p><h1>BRÁS<br/><em>FIGHTERS</em></h1><p className="lead">Escolha seu agente, domine as plataformas e conquiste a Linha 11.</p><div className="intro-buttons"><button className="music-start" onClick={playMusic}>♫ TOCAR MÚSICA</button><button className="start" onClick={()=>setScreen("setup")}>JOGAR AGORA <span>▶</span></button><button className="ghost" onClick={()=>setShowHelp(true)}>VER CONTROLES</button>{!isInstalled&&<button className="install-app" onClick={installApp}>⬇ {isIos?"INSTALAR NO IPHONE":"INSTALAR APP"}</button>}</div><div className="records"><span>🏆 {stats.victories} vitórias</span><span>⚡ Melhor combo: {stats.bestCombo}</span></div></div><div className="versus-card"><div className="intro-fighter left"/><div className="vs">VS</div><div className="intro-fighter right"/></div></section>}
 
     {screen === "setup" && <section className="setup-screen"><div className="setup-heading"><p>PREPARE A BATALHA</p><h2>ESCOLHA SEU LUTADOR</h2></div><div className="setup-grid mobile-setup">
       <div className="setup-panel fighter-select"><h3>VOCÊ JOGA COMO</h3><div className="agent-options"><button className={p1Choice===0?"player-card selected":"player-card"} onClick={()=>setP1Choice(0)}><div className="mini-fighter fighter-alfa"/><div><b>AGENTE</b><small>Ágil e preparado para enfrentar o Marreta.</small></div></button><button className={p1Choice===2?"player-card selected":"player-card"} onClick={()=>setP1Choice(2)}><div className="mini-fighter fighter-agente-feminina"/><div><b>AGENTE FEMININA</b><small>Rápida, forte e pronta para o combate.</small></div></button></div></div>
       <div className="setup-panel rival-panel"><h3>SEU RIVAL FIXO</h3><div className="rival-card"><div className="mini-fighter fighter-marreta"/><div><b>MARRETA</b><small>Ataca com o saco preto e não dá moleza.</small></div></div><h3>2. DIFICULDADE</h3><div className="segmented">{["normal","hard"].map((d,i)=><button key={d} className={difficulty===d?"selected":""} onClick={()=>setDifficulty(d)}>{["DESAFIANTE","DIFÍCIL"][i]}</button>)}</div><h3>3. CAMPANHA — 5 FASES</h3><div className="stage-route">{stages.map((s,i)=><span key={s.arena}><b>{i+1}</b>{s.name}</span>)}</div></div>
     </div><button className="start battle" onClick={start}>COMEÇAR BATALHA ▶</button></section>}
 
-    {screen === "fight" && <section className="fight-wrap">{!muted&&<iframe className="youtube-music" title="Música da batalha" src="https://www.youtube.com/embed/coz22oUWnC0?autoplay=1&loop=1&playlist=coz22oUWnC0&controls=0&modestbranding=1&playsinline=1" allow="autoplay; encrypted-media"/>}<div className="hud"><FighterHud name={p1Name} hp={hp[0]} wins={wins[0]} side="p1" fighterId={fighters[p1Choice].id}/><div className="clock">{String(time).padStart(2,"0")}<small>ROUND {wins[0]+wins[1]+1}</small></div><FighterHud name={p2Name} hp={hp[1]} wins={wins[1]} side="p2" fighterId={fighters[p2Choice].id}/></div>
+    {screen === "fight" && <section className="fight-wrap"><div className="hud"><FighterHud name={p1Name} hp={hp[0]} wins={wins[0]} side="p1" fighterId={fighters[p1Choice].id}/><div className="clock">{String(time).padStart(2,"0")}<small>ROUND {wins[0]+wins[1]+1}</small></div><FighterHud name={p2Name} hp={hp[1]} wins={wins[1]} side="p2" fighterId={fighters[p2Choice].id}/></div>
       <div className={`arena arena-${arena} ${moves[1]==="hit"?"impact-shake":""}`}><div className="stage-depth"/><div className="moving-train"><i/><i/><i/><i/><i/></div><div className="arena-name">FASE {stage+1}/5 • ESTAÇÃO {stages[stage].name.toUpperCase()}</div><div className={`fighter player ${moves[0]}`} style={{left:`${position[0]}%`,bottom:`${verticalPosition[0]}%`}}><div className={`sprite fighter-${fighters[p1Choice].id}`}/><span>{p1Name}</span></div><div className={`fighter cpu ${moves[1]}`} style={{left:`${position[1]}%`,bottom:`${verticalPosition[1]}%`}}><div className={`sprite fighter-${fighters[p2Choice].id}`}/><span>{p2Name}</span></div>{(moves[0]==="punch"||moves[0]==="kick"||moves[0]==="special")&&<div className={`hit-spark spark-${moves[0]}`}/>}<div className="fight-message">{message}</div>{combo>=2&&<div className="combo-badge">{combo}<small>HIT COMBO</small></div>}<div className="floor-glow"/></div>
       {stageTransition&&<div className="stage-transition"><span>NÍVEL CONCLUÍDO</span><div className="station-arrow">↑</div><small>INDO PARA O NÍVEL DA ESTAÇÃO</small><b>{stageTransition.toUpperCase()}</b><i>FASE {stage + 2} DE 5</i></div>}
       <div className="meters"><div className="energy-row"><b>P1 ESPECIAL</b><div className="energy"><i style={{width:`${energy[0]}%`}}/></div><span>{energy[0]}%</span></div><div className="energy-row reverse-meter"><b>P2 ESPECIAL</b><div className="energy"><i style={{width:`${energy[1]}%`}}/></div><span>{energy[1]}%</span></div></div>
+      <button className="mobile-music" onClick={playMusic}>♫ MÚSICA</button>
       <div className="controls"><div className="dpad"><button aria-label="Mover para trás" onPointerDown={()=>holdDirection(()=>moveFighter(0,-1.6))}>◀</button><button aria-label="Mover para cima" onPointerDown={()=>holdDirection(()=>moveVertical(0,1.1))}>▲</button><button aria-label="Mover para frente" onPointerDown={()=>holdDirection(()=>moveFighter(0,1.6))}>▶</button><button aria-label="Mover para baixo" onPointerDown={()=>holdDirection(()=>moveVertical(0,-1.1))}>▼</button></div><div className="actions"><button className="block" onClick={()=>act(0,"block")}><small>◆</small>DEFESA</button><button className="punch" onClick={()=>act(0,"punch")}><small>●</small>SOCO</button><button className="kick" onClick={()=>act(0,"kick")}><small>●</small>CHUTE</button><button className="special" disabled={energy[0]<100} onClick={()=>act(0,"special")}><small>⚡</small>ESPECIAL</button></div></div>
     </section>}
 
