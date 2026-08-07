@@ -71,3 +71,6 @@ button,input{font:inherit}.game-shell{position:relative;width:100vw;height:100dv
 
 /* Installable PWA */
 .install-app{border:2px solid var(--cyan);background:#071b29e8;color:#fff;padding:13px 18px;box-shadow:4px 4px #003e53;cursor:pointer;font:900 10px Arial;letter-spacing:1px}.install-app:active{transform:translateY(3px);box-shadow:none}.install-help{max-width:480px}.install-steps{display:grid;gap:8px;margin:14px 0;text-align:left}.install-steps span{display:flex;align-items:center;gap:10px;background:#0c1a2a;border:1px solid #39566e;padding:10px;font:700 11px/1.35 Arial;color:#d8e5ee}.install-steps b{display:grid;place-items:center;flex:0 0 25px;height:25px;border-radius:50%;background:var(--orange);color:#fff}.install-steps strong{color:var(--cyan)}
+
+/* Mobile browsers require one explicit tap before playing YouTube audio. */
+.music-start,.mobile-music{border:2px solid var(--yellow);background:#1a1205e8;color:var(--yellow);padding:12px 15px;box-shadow:4px 4px #5b3500;cursor:pointer;font:900 10px Arial;letter-spacing:1px}.mobile-music{position:absolute;z-index:19;top:16dvh;right:2vw;padding:8px 10px;font-size:8px}.youtube-music{position:fixed!important;z-index:-1!important;left:0!important;top:0!important;width:2px!important;height:2px!important;opacity:.01!important;pointer-events:none!important}
