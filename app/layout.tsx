@@ -13,6 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Brás Fighters" },
   title: "Brás Fighters — Jogo de Luta",
   description: "Entre na arena ferroviária e vença a batalha no Brás Fighters.",
   other: {
