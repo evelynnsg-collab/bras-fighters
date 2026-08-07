@@ -63,5 +63,8 @@ button,input{font:inherit}.game-shell{position:relative;width:100vw;height:100dv
 /* Keep the original sprite palette on mobile Safari. Filters on animated
    ancestors can otherwise be composited into the transparent PNG sprites. */
 .arena,.arena-bras,.arena-luz,.arena-tatuape,.arena-guaianases,.arena-itaquera{filter:none!important}
-.fighter,.fighter.hit,.fighter.special,.fighter.block{filter:drop-shadow(9px 10px 2px #000a)!important}
-.fighter .sprite{filter:none!important;opacity:1;mix-blend-mode:normal;isolation:isolate}
+.fighter{filter:drop-shadow(9px 10px 2px #000a)!important;-webkit-filter:drop-shadow(9px 10px 2px #000a)!important}
+.fighter.cpu,.fighter.cpu.hit,.fighter.cpu.special,.fighter.cpu.block{filter:none!important;-webkit-filter:none!important}
+.fighter .sprite,.fighter.cpu .sprite{filter:none!important;-webkit-filter:none!important;opacity:1;mix-blend-mode:normal;isolation:isolate;transform:translateZ(0)}
+.fighter.cpu .sprite{transform:scaleX(-1) translateZ(0)}
+@keyframes hit{0%{filter:none;-webkit-filter:none}25%{transform:translateX(5vw) rotate(8deg);filter:none;-webkit-filter:none}70%{transform:translateX(-1vw);filter:none;-webkit-filter:none}100%{transform:translateX(0);filter:none;-webkit-filter:none}}
