@@ -6,6 +6,7 @@ type Screen = "intro" | "setup" | "fight" | "over";
 type Move = "punch" | "kick" | "special" | "block";
 type Mode = "cpu" | "duo";
 type Arena = "bras" | "luz" | "tatuape" | "guaianases" | "itaquera";
+type InstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed" }> };
 
 const stages: { arena: Arena; name: string }[] = [
   { arena: "bras", name: "Brás" },
@@ -43,6 +44,10 @@ export default function Home() {
   const [message, setMessage] = useState("PREPARE-SE");
   const [combo, setCombo] = useState(0);
   const [showHelp, setShowHelp] = useState(false);
+  const [showInstallHelp, setShowInstallHelp] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
+  const [isIos, setIsIos] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
   const [muted, setMuted] = useState(false);
   const [stats, setStats] = useState({ victories: 0, bestCombo: 0 });
   const locked = useRef(false);
@@ -60,7 +65,24 @@ export default function Home() {
 
   useEffect(() => {
     try { const saved = localStorage.getItem("bras-fighters-stats"); if (saved) setStats(JSON.parse(saved)); } catch {}
+    if ("serviceWorker" in navigator) void navigator.serviceWorker.register("/sw.js");
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const standalone = window.matchMedia("(display-mode: standalone)").matches || Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
+    setIsIos(ios); setIsInstalled(standalone);
+    const beforeInstall = (event: Event) => { event.preventDefault(); setInstallPrompt(event as InstallPromptEvent); };
+    const installed = () => { setIsInstalled(true); setInstallPrompt(null); };
+    window.addEventListener("beforeinstallprompt", beforeInstall);
+    window.addEventListener("appinstalled", installed);
+    return () => { window.removeEventListener("beforeinstallprompt", beforeInstall); window.removeEventListener("appinstalled", installed); };
   }, []);
+
+  const installApp = useCallback(async () => {
+    if (isIos || !installPrompt) { setShowInstallHelp(true); return; }
+    await installPrompt.prompt();
+    const result = await installPrompt.userChoice;
+    if (result.outcome === "accepted") setIsInstalled(true);
+    setInstallPrompt(null);
+  }, [installPrompt, isIos]);
 
   const sound = useCallback((tone = 160, length = .07) => {
     if (muted) return;
@@ -258,22 +280,22 @@ export default function Home() {
 
   const start = () => {
     const initialWins: [number,number] = [0,0]; winsRef.current = initialWins; hpRef.current=[100,100];
-    startTheme(); punchStreak.current=0; lastPunchAt.current=0; setStage(0); setStageTransition(null); setWins(initialWins); setHp([100,100]); setEnergy([20,45]); setPosition([15,65]); setVerticalPosition([16,16]); setTime(60); setCombo(0); setMessage("FASE 1 — BRÁS"); locked.current=false; setScreen("fight");
+    punchStreak.current=0; lastPunchAt.current=0; setStage(0); setStageTransition(null); setWins(initialWins); setHp([100,100]); setEnergy([20,45]); setPosition([15,65]); setVerticalPosition([16,16]); setTime(60); setCombo(0); setMessage("FASE 1 — BRÁS"); locked.current=false; setScreen("fight");
   };
 
   return <main className="game-shell">
     <div className="scanlines" />
     <div className="rotate-device"><div className="phone-icon">↻</div><b>GIRE O CELULAR</b><span>O jogo funciona na horizontal</span></div>
-    <header className={`topbar ${screen==="fight"?"during-fight":""}`}><button className="brandButton" onClick={()=>setScreen("intro")}><span>BRÁS</span> FIGHTERS <small>MOBILE</small></button><div className="header-actions"><button onClick={()=>setShowHelp(true)}>?</button><button onClick={()=>setMuted(v=>{const next=!v;if(next)stopTheme();else if(screen==="fight")window.setTimeout(startTheme,0);return next})}>{muted?"🔇":"🔊"}</button></div></header>
+    <header className={`topbar ${screen==="fight"?"during-fight":""}`}><button className="brandButton" onClick={()=>setScreen("intro")}><span>BRÁS</span> FIGHTERS <small>MOBILE</small></button><div className="header-actions"><button onClick={()=>setShowHelp(true)}>?</button><button onClick={()=>setMuted(v=>!v)}>{muted?"🔇":"🔊"}</button></div></header>
 
-    {screen === "intro" && <section className="intro enhanced"><div className="intro-copy"><p className="eyebrow">NOVA EDIÇÃO • BATALHA FERROVIÁRIA</p><h1>BRÁS<br/><em>FIGHTERS</em></h1><p className="lead">Escolha seu agente, domine as plataformas e conquiste a Linha 11.</p><div className="intro-buttons"><button className="start" onClick={()=>setScreen("setup")}>JOGAR AGORA <span>▶</span></button><button className="ghost" onClick={()=>setShowHelp(true)}>VER CONTROLES</button></div><div className="records"><span>🏆 {stats.victories} vitórias</span><span>⚡ Melhor combo: {stats.bestCombo}</span></div></div><div className="versus-card"><div className="intro-fighter left"/><div className="vs">VS</div><div className="intro-fighter right"/></div></section>}
+    {screen === "intro" && <section className="intro enhanced"><div className="intro-copy"><p className="eyebrow">NOVA EDIÇÃO • BATALHA FERROVIÁRIA</p><h1>BRÁS<br/><em>FIGHTERS</em></h1><p className="lead">Escolha seu agente, domine as plataformas e conquiste a Linha 11.</p><div className="intro-buttons"><button className="start" onClick={()=>setScreen("setup")}>JOGAR AGORA <span>▶</span></button><button className="ghost" onClick={()=>setShowHelp(true)}>VER CONTROLES</button>{!isInstalled&&<button className="install-app" onClick={installApp}>⬇ {isIos?"INSTALAR NO IPHONE":"INSTALAR APP"}</button>}</div><div className="records"><span>🏆 {stats.victories} vitórias</span><span>⚡ Melhor combo: {stats.bestCombo}</span></div></div><div className="versus-card"><div className="intro-fighter left"/><div className="vs">VS</div><div className="intro-fighter right"/></div></section>}
 
     {screen === "setup" && <section className="setup-screen"><div className="setup-heading"><p>PREPARE A BATALHA</p><h2>ESCOLHA SEU LUTADOR</h2></div><div className="setup-grid mobile-setup">
       <div className="setup-panel fighter-select"><h3>VOCÊ JOGA COMO</h3><div className="agent-options"><button className={p1Choice===0?"player-card selected":"player-card"} onClick={()=>setP1Choice(0)}><div className="mini-fighter fighter-alfa"/><div><b>AGENTE</b><small>Ágil e preparado para enfrentar o Marreta.</small></div></button><button className={p1Choice===2?"player-card selected":"player-card"} onClick={()=>setP1Choice(2)}><div className="mini-fighter fighter-agente-feminina"/><div><b>AGENTE FEMININA</b><small>Rápida, forte e pronta para o combate.</small></div></button></div></div>
       <div className="setup-panel rival-panel"><h3>SEU RIVAL FIXO</h3><div className="rival-card"><div className="mini-fighter fighter-marreta"/><div><b>MARRETA</b><small>Ataca com o saco preto e não dá moleza.</small></div></div><h3>2. DIFICULDADE</h3><div className="segmented">{["normal","hard"].map((d,i)=><button key={d} className={difficulty===d?"selected":""} onClick={()=>setDifficulty(d)}>{["DESAFIANTE","DIFÍCIL"][i]}</button>)}</div><h3>3. CAMPANHA — 5 FASES</h3><div className="stage-route">{stages.map((s,i)=><span key={s.arena}><b>{i+1}</b>{s.name}</span>)}</div></div>
     </div><button className="start battle" onClick={start}>COMEÇAR BATALHA ▶</button></section>}
 
-    {screen === "fight" && <section className="fight-wrap">{!muted&&<iframe className="youtube-music" title="Música da batalha" src="https://www.youtube.com/embed/7NAIofBaEQk?autoplay=1&loop=1&playlist=7NAIofBaEQk&start=5&controls=0&modestbranding=1&playsinline=1" allow="autoplay; encrypted-media"/>}<div className="hud"><FighterHud name={p1Name} hp={hp[0]} wins={wins[0]} side="p1" fighterId={fighters[p1Choice].id}/><div className="clock">{String(time).padStart(2,"0")}<small>ROUND {wins[0]+wins[1]+1}</small></div><FighterHud name={p2Name} hp={hp[1]} wins={wins[1]} side="p2" fighterId={fighters[p2Choice].id}/></div>
+    {screen === "fight" && <section className="fight-wrap">{!muted&&<iframe className="youtube-music" title="Música da batalha" src="https://www.youtube.com/embed/coz22oUWnC0?autoplay=1&loop=1&playlist=coz22oUWnC0&controls=0&modestbranding=1&playsinline=1" allow="autoplay; encrypted-media"/>}<div className="hud"><FighterHud name={p1Name} hp={hp[0]} wins={wins[0]} side="p1" fighterId={fighters[p1Choice].id}/><div className="clock">{String(time).padStart(2,"0")}<small>ROUND {wins[0]+wins[1]+1}</small></div><FighterHud name={p2Name} hp={hp[1]} wins={wins[1]} side="p2" fighterId={fighters[p2Choice].id}/></div>
       <div className={`arena arena-${arena} ${moves[1]==="hit"?"impact-shake":""}`}><div className="stage-depth"/><div className="moving-train"><i/><i/><i/><i/><i/></div><div className="arena-name">FASE {stage+1}/5 • ESTAÇÃO {stages[stage].name.toUpperCase()}</div><div className={`fighter player ${moves[0]}`} style={{left:`${position[0]}%`,bottom:`${verticalPosition[0]}%`}}><div className={`sprite fighter-${fighters[p1Choice].id}`}/><span>{p1Name}</span></div><div className={`fighter cpu ${moves[1]}`} style={{left:`${position[1]}%`,bottom:`${verticalPosition[1]}%`}}><div className={`sprite fighter-${fighters[p2Choice].id}`}/><span>{p2Name}</span></div>{(moves[0]==="punch"||moves[0]==="kick"||moves[0]==="special")&&<div className={`hit-spark spark-${moves[0]}`}/>}<div className="fight-message">{message}</div>{combo>=2&&<div className="combo-badge">{combo}<small>HIT COMBO</small></div>}<div className="floor-glow"/></div>
       {stageTransition&&<div className="stage-transition"><span>NÍVEL CONCLUÍDO</span><div className="station-arrow">↑</div><small>INDO PARA O NÍVEL DA ESTAÇÃO</small><b>{stageTransition.toUpperCase()}</b><i>FASE {stage + 2} DE 5</i></div>}
       <div className="meters"><div className="energy-row"><b>P1 ESPECIAL</b><div className="energy"><i style={{width:`${energy[0]}%`}}/></div><span>{energy[0]}%</span></div><div className="energy-row reverse-meter"><b>P2 ESPECIAL</b><div className="energy"><i style={{width:`${energy[1]}%`}}/></div><span>{energy[1]}%</span></div></div>
@@ -282,6 +304,7 @@ export default function Home() {
 
     {screen === "over" && <section className="game-over"><p>{stage===4&&wins[0]>wins[1]?"CAMPANHA CONCLUÍDA":"FIM DA CAMPANHA"}</p><h2>{wins[0]>wins[1]?p1Name:p2Name} VENCEU!</h2><div className="final-score">FASE {stage+1}<span>/5</span></div><p className="match-data">Maior combo: {combo} • Estação: {stages[stage].name.toUpperCase()}</p><div><button className="ghost" onClick={()=>setScreen("setup")}>ALTERAR JOGO</button><button className="start" onClick={start}>JOGAR DE NOVO</button></div></section>}
 
+    {showInstallHelp&&<div className="modal-backdrop" onClick={()=>setShowInstallHelp(false)}><div className="help-modal install-help" onClick={e=>e.stopPropagation()}><button className="close" onClick={()=>setShowInstallHelp(false)}>×</button><p>INSTALAR BRÁS FIGHTERS</p><h2>{isIos?"NO IPHONE OU IPAD":"NO CELULAR"}</h2>{isIos?<div className="install-steps"><span><b>1</b>Toque no botão <strong>Compartilhar</strong> do Safari.</span><span><b>2</b>Escolha <strong>Adicionar à Tela de Início</strong>.</span><span><b>3</b>Confirme em <strong>Adicionar</strong>.</span></div>:<div className="install-steps"><span><b>1</b>Abra o menu do navegador.</span><span><b>2</b>Escolha <strong>Instalar aplicativo</strong>.</span><span><b>3</b>Confirme a instalação.</span></div>}<button className="start" onClick={()=>setShowInstallHelp(false)}>ENTENDI</button></div></div>}
     {showHelp&&<div className="modal-backdrop" onClick={()=>setShowHelp(false)}><div className="help-modal" onClick={e=>e.stopPropagation()}><button className="close" onClick={()=>setShowHelp(false)}>×</button><p>TUTORIAL RÁPIDO</p><h2>COMO JOGAR</h2><div className="mobile-help"><div><b>◀ ▲ ▶</b><span>Movimente e pule usando os botões da esquerda.</span></div><div><b>SOCO • CHUTE</b><span>Use os botões da direita para atacar.</span></div><div><b>DEFESA</b><span>Segure o golpe do adversário.</span></div><div><b>ESPECIAL</b><span>Libera quando a barra chegar a 100%.</span></div></div><p className="tip">Acerte golpes seguidos para criar combos e causar mais pressão.</p><button className="start" onClick={()=>setShowHelp(false)}>ENTENDI!</button></div></div>}
     <footer>TRIVIA ARCADE SYSTEM • BRÁS FIGHTERS 2.0</footer>
   </main>;
