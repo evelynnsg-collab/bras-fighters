@@ -37,6 +37,7 @@ export default function Home() {
   const [energy, setEnergy] = useState<[number, number]>([25, 25]);
   const [wins, setWins] = useState<[number, number]>([0, 0]);
   const [position, setPosition] = useState<[number, number]>([15, 65]);
+  const [verticalPosition, setVerticalPosition] = useState<[number, number]>([16, 16]);
   const [moves, setMoves] = useState<[string, string]>(["idle", "idle"]);
   const [time, setTime] = useState(60);
   const [message, setMessage] = useState("PREPARE-SE");
@@ -52,6 +53,7 @@ export default function Home() {
   const winsRef = useRef<[number, number]>([0, 0]);
   const afastaAudio = useRef<HTMLAudioElement | null>(null);
   const ossAudio = useRef<HTMLAudioElement | null>(null);
+  const directionLoop = useRef<number | null>(null);
 
   useEffect(() => {
     try { const saved = localStorage.getItem("bras-fighters-stats"); if (saved) setStats(JSON.parse(saved)); } catch {}
@@ -157,12 +159,46 @@ export default function Home() {
     animate(who, "walk");
   }, [screen]);
 
+  const moveVertical = useCallback((who: 0 | 1, delta: number) => {
+    if (screen !== "fight" || locked.current) return;
+    setVerticalPosition(v => {
+      const n: [number,number] = [...v] as [number,number];
+      n[who] = Math.max(10, Math.min(31, n[who] + delta));
+      return n;
+    });
+    animate(who, "walk");
+  }, [screen]);
+
+  const stopDirection = useCallback(() => {
+    if (directionLoop.current !== null) window.clearInterval(directionLoop.current);
+    directionLoop.current = null;
+  }, []);
+
+  const holdDirection = useCallback((action: () => void) => {
+    stopDirection();
+    action();
+    directionLoop.current = window.setInterval(action, 55);
+  }, [stopDirection]);
+
+  useEffect(() => {
+    window.addEventListener("pointerup", stopDirection);
+    window.addEventListener("pointercancel", stopDirection);
+    window.addEventListener("blur", stopDirection);
+    return () => {
+      stopDirection();
+      window.removeEventListener("pointerup", stopDirection);
+      window.removeEventListener("pointercancel", stopDirection);
+      window.removeEventListener("blur", stopDirection);
+    };
+  }, [stopDirection]);
+
   useEffect(() => {
     if (screen !== "fight") return;
     const onKey = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
       if (key === "a") moveFighter(0,-4); if (key === "d") moveFighter(0,4); if (key === "w") animate(0,"jump");
       if (key === "j") act(0,"punch"); if (key === "k") act(0,"kick"); if (key === "i") act(0,"block"); if (key === "l") act(0,"special");
+      if (mode === "duo") { if (e.key === "ArrowLeft") moveFighter(1,-4); if (e.key === "ArrowRight") moveFighter(1,4); if (e.key === "ArrowUp") animate(1,"jump"); if (key === "1") act(1,"punch"); if (key === "2") act(1,"kick"); if (key === "3") act(1,"block"); if (key === "0") act(1,"special"); }
     };
     window.addEventListener("keydown",onKey); return () => window.removeEventListener("keydown",onKey);
   }, [act, mode, moveFighter, screen]);
@@ -190,7 +226,7 @@ export default function Home() {
 
   const start = () => {
     const initialWins: [number,number] = [0,0]; winsRef.current = initialWins; hpRef.current=[100,100];
-    punchStreak.current=0; lastPunchAt.current=0; setStage(0); setStageTransition(null); setWins(initialWins); setHp([100,100]); setEnergy([20,45]); setPosition([15,65]); setTime(60); setCombo(0); setMessage("FASE 1 — BRÁS"); locked.current=false; setScreen("fight");
+    punchStreak.current=0; lastPunchAt.current=0; setStage(0); setStageTransition(null); setWins(initialWins); setHp([100,100]); setEnergy([20,45]); setPosition([15,65]); setVerticalPosition([16,16]); setTime(60); setCombo(0); setMessage("FASE 1 — BRÁS"); locked.current=false; setScreen("fight");
   };
 
   return <main className="game-shell">
@@ -206,10 +242,10 @@ export default function Home() {
     </div><button className="start battle" onClick={start}>COMEÇAR BATALHA ▶</button></section>}
 
     {screen === "fight" && <section className="fight-wrap">{!muted&&<iframe className="youtube-music" title="Música da batalha" src="https://www.youtube.com/embed/7NAIofBaEQk?autoplay=1&loop=1&playlist=7NAIofBaEQk&start=5&controls=0&modestbranding=1&playsinline=1" allow="autoplay; encrypted-media"/>}<div className="hud"><FighterHud name={p1Name} hp={hp[0]} wins={wins[0]} side="p1" fighterId={fighters[p1Choice].id}/><div className="clock">{String(time).padStart(2,"0")}<small>ROUND {wins[0]+wins[1]+1}</small></div><FighterHud name={p2Name} hp={hp[1]} wins={wins[1]} side="p2" fighterId={fighters[p2Choice].id}/></div>
-      <div className={`arena arena-${arena} ${moves[1]==="hit"?"impact-shake":""}`}><div className="stage-depth"/><div className="moving-train"><i/><i/><i/><i/><i/></div><div className="arena-name">FASE {stage+1}/5 • ESTAÇÃO {stages[stage].name.toUpperCase()}</div><div className={`fighter player ${moves[0]}`} style={{left:`${position[0]}%`}}><div className={`sprite fighter-${fighters[p1Choice].id}`}/><span>{p1Name}</span></div><div className={`fighter cpu ${moves[1]}`} style={{left:`${position[1]}%`}}><div className={`sprite fighter-${fighters[p2Choice].id}`}/><span>{p2Name}</span></div>{(moves[0]==="punch"||moves[0]==="kick"||moves[0]==="special")&&<div className={`hit-spark spark-${moves[0]}`}/>}<div className="fight-message">{message}</div>{combo>=2&&<div className="combo-badge">{combo}<small>HIT COMBO</small></div>}<div className="floor-glow"/></div>
+      <div className={`arena arena-${arena} ${moves[1]==="hit"?"impact-shake":""}`}><div className="stage-depth"/><div className="moving-train"><i/><i/><i/><i/><i/></div><div className="arena-name">FASE {stage+1}/5 • ESTAÇÃO {stages[stage].name.toUpperCase()}</div><div className={`fighter player ${moves[0]}`} style={{left:`${position[0]}%`,bottom:`${verticalPosition[0]}%`}}><div className={`sprite fighter-${fighters[p1Choice].id}`}/><span>{p1Name}</span></div><div className={`fighter cpu ${moves[1]}`} style={{left:`${position[1]}%`,bottom:`${verticalPosition[1]}%`}}><div className={`sprite fighter-${fighters[p2Choice].id}`}/><span>{p2Name}</span></div>{(moves[0]==="punch"||moves[0]==="kick"||moves[0]==="special")&&<div className={`hit-spark spark-${moves[0]}`}/>}<div className="fight-message">{message}</div>{combo>=2&&<div className="combo-badge">{combo}<small>HIT COMBO</small></div>}<div className="floor-glow"/></div>
       {stageTransition&&<div className="stage-transition"><span>NÍVEL CONCLUÍDO</span><div className="station-arrow">↑</div><small>INDO PARA O NÍVEL DA ESTAÇÃO</small><b>{stageTransition.toUpperCase()}</b><i>FASE {stage + 2} DE 5</i></div>}
       <div className="meters"><div className="energy-row"><b>P1 ESPECIAL</b><div className="energy"><i style={{width:`${energy[0]}%`}}/></div><span>{energy[0]}%</span></div><div className="energy-row reverse-meter"><b>P2 ESPECIAL</b><div className="energy"><i style={{width:`${energy[1]}%`}}/></div><span>{energy[1]}%</span></div></div>
-      <div className="controls"><div className="dpad"><button onClick={()=>moveFighter(0,-4)}>◀</button><button onClick={()=>animate(0,"jump")}>▲</button><button onClick={()=>moveFighter(0,4)}>▶</button></div><div className="actions"><button className="block" onClick={()=>act(0,"block")}><small>◆</small>DEFESA</button><button className="punch" onClick={()=>act(0,"punch")}><small>●</small>SOCO</button><button className="kick" onClick={()=>act(0,"kick")}><small>●</small>CHUTE</button><button className="special" disabled={energy[0]<100} onClick={()=>act(0,"special")}><small>⚡</small>ESPECIAL</button></div></div>
+      <div className="controls"><div className="dpad"><button aria-label="Mover para trás" onPointerDown={()=>holdDirection(()=>moveFighter(0,-1.6))}>◀</button><button aria-label="Mover para cima" onPointerDown={()=>holdDirection(()=>moveVertical(0,1.1))}>▲</button><button aria-label="Mover para frente" onPointerDown={()=>holdDirection(()=>moveFighter(0,1.6))}>▶</button><button aria-label="Mover para baixo" onPointerDown={()=>holdDirection(()=>moveVertical(0,-1.1))}>▼</button></div><div className="actions"><button className="block" onClick={()=>act(0,"block")}><small>◆</small>DEFESA</button><button className="punch" onClick={()=>act(0,"punch")}><small>●</small>SOCO</button><button className="kick" onClick={()=>act(0,"kick")}><small>●</small>CHUTE</button><button className="special" disabled={energy[0]<100} onClick={()=>act(0,"special")}><small>⚡</small>ESPECIAL</button></div></div>
     </section>}
 
     {screen === "over" && <section className="game-over"><p>{stage===4&&wins[0]>wins[1]?"CAMPANHA CONCLUÍDA":"FIM DA CAMPANHA"}</p><h2>{wins[0]>wins[1]?p1Name:p2Name} VENCEU!</h2><div className="final-score">FASE {stage+1}<span>/5</span></div><p className="match-data">Maior combo: {combo} • Estação: {stages[stage].name.toUpperCase()}</p><div><button className="ghost" onClick={()=>setScreen("setup")}>ALTERAR JOGO</button><button className="start" onClick={start}>JOGAR DE NOVO</button></div></section>}
