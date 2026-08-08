@@ -80,3 +80,17 @@ footer{display:block;position:fixed;z-index:35;left:0;right:0;bottom:4px;text-al
 
 /* Creator credit on the opening screen */
 .creator-signature{width:max-content;max-width:100%;margin:1.5vh 0 2vh;padding:8px 14px;background:#07111dcc;border-left:4px solid var(--cyan);color:#fff;font:900 clamp(10px,1.4vw,14px) Arial;letter-spacing:.5px;text-shadow:2px 2px #000}
+
+/* Versioned sprite URLs force mobile browsers and installed PWAs to discard
+   the earlier incomplete downloads. */
+.intro-fighter.left,.mini-fighter.left,.mini-fighter.fighter-alfa,.fighter-alfa,.portrait.p1{background-image:url('/fighter-alfa-blue-v3.png')}
+.intro-fighter.right,.mini-fighter.right,.mini-fighter.fighter-bravo,.fighter-bravo,.portrait.p2{background-image:url('/fighter-bravo-blue-v3.png')}
+.mini-fighter.fighter-agente-feminina,.fighter-agente-feminina{background-image:url('/fighter-agente-feminina-blue-v3.png')}
+.fighter.punch .fighter-alfa{background-image:url('/fighter-alfa-punch-blue-v3.png')}
+.fighter.kick .fighter-alfa{background-image:url('/fighter-alfa-kick-blue-v3.png')}
+.fighter.punch .fighter-bravo{background-image:url('/fighter-bravo-punch-blue-v3.png')}
+.fighter.kick .fighter-bravo{background-image:url('/fighter-bravo-kick-blue-v3.png')}
+.fighter.punch .fighter-agente-feminina{background-image:url('/fighter-agente-feminina-punch-blue-v3.png')}
+.fighter.kick .fighter-agente-feminina{background-image:url('/fighter-agente-feminina-kick-blue-v3.png')}
+@keyframes maleBatonPose{0%,38%{background-image:url('/fighter-alfa-blue-v3.png')}39%,100%{background-image:url('/fighter-alfa-special-blue-v3.png')}}
+@keyframes femaleBatonPose{0%,38%{background-image:url('/fighter-agente-feminina-blue-v3.png')}39%,100%{background-image:url('/fighter-agente-feminina-special-blue-v3.png')}}

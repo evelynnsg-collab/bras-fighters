@@ -66,7 +66,9 @@ export default function Home() {
 
   useEffect(() => {
     try { const saved = localStorage.getItem("bras-fighters-stats"); if (saved) setStats(JSON.parse(saved)); } catch {}
-    if ("serviceWorker" in navigator) void navigator.serviceWorker.register("/sw.js");
+    if ("serviceWorker" in navigator) {
+      void navigator.serviceWorker.register("/sw.js?v=3", { updateViaCache: "none" }).then(registration => registration.update());
+    }
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
     const standalone = window.matchMedia("(display-mode: standalone)").matches || Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
     setIsIos(ios); setIsInstalled(standalone);
